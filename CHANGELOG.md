@@ -1,5 +1,15 @@
 # Changelog
 
+## v0.3.9-alpha
+
+### Fixed
+
+- 打包版在连接微信和读取图片时会反复弹出黑色控制台窗口：查找、关闭微信进程所用的 PowerShell、taskkill 和 tasklist 现已全部以隐藏窗口方式运行。
+
+### Verified
+
+- 新增回归测试，确保所有辅助命令行进程都带有隐藏窗口标志。
+
 ## v0.3.8-alpha
 
 本版本是 [ldfpku/wechat-ai-memory](https://github.com/ldfpku/wechat-ai-memory) 分支的首个发布，重点加固本机隐私边界与发布流程。
