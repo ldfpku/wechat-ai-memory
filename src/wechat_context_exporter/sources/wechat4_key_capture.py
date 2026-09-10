@@ -13,6 +13,10 @@ from .wechat4_crypto import PAGE_SIZE, verify_account_key
 
 ProgressCallback = Callable[[int, int, str], None]
 
+# The packaged application runs without a console. Without this flag every
+# helper process (PowerShell, taskkill) would flash its own console window.
+_NO_WINDOW = subprocess.CREATE_NO_WINDOW if os.name == "nt" else 0
+
 
 _SHA512_HOOK = r"""
 let installed = false;
@@ -219,7 +223,14 @@ def find_wechat_executable() -> Path:
         "Get-CimInstance Win32_Process -Filter \"Name='Weixin.exe'\" | "
         "Sort-Object WorkingSetSize -Descending | Select-Object -First 1 -ExpandProperty ExecutablePath",
     ]
-    result = subprocess.run(command, capture_output=True, text=True, errors="replace", check=False)
+    result = subprocess.run(
+        command,
+        capture_output=True,
+        text=True,
+        errors="replace",
+        check=False,
+        creationflags=_NO_WINDOW,
+    )
     path = Path(result.stdout.strip()) if result.stdout.strip() else None
     if path and path.is_file():
         return path
@@ -243,6 +254,7 @@ def _stop_wechat() -> None:
         text=True,
         errors="replace",
         check=False,
+        creationflags=_NO_WINDOW,
     )
     deadline = time.monotonic() + 10
     while time.monotonic() < deadline:
@@ -261,7 +273,14 @@ def _main_wechat_pid(minimum_working_set: int = 20 * 1024 * 1024) -> int | None:
         f"Where-Object {{$_.WorkingSet64 -gt {minimum_working_set}}} | "
         "Sort-Object WorkingSet64 -Descending | Select-Object -First 1 -ExpandProperty Id",
     ]
-    result = subprocess.run(command, capture_output=True, text=True, errors="replace", check=False)
+    result = subprocess.run(
+        command,
+        capture_output=True,
+        text=True,
+        errors="replace",
+        check=False,
+        creationflags=_NO_WINDOW,
+    )
     value = result.stdout.strip()
     return int(value) if value.isdigit() else None
 

@@ -406,6 +406,8 @@ def _process_candidates(process_name: str) -> list[tuple[int, int]]:
         encoding=locale.getpreferredencoding(False),
         errors="replace",
         check=False,
+        # The packaged application has no console; keep tasklist from flashing one.
+        creationflags=subprocess.CREATE_NO_WINDOW if os.name == "nt" else 0,
     )
     candidates: list[tuple[int, int]] = []
     for fields in csv.reader(io.StringIO(result.stdout)):
