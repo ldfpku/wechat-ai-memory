@@ -3,6 +3,7 @@ from __future__ import annotations
 import hashlib
 import sqlite3
 import struct
+import tempfile
 from pathlib import Path
 
 import zstandard
@@ -154,12 +155,17 @@ def test_local_source_lists_conversations_and_reads_messages(tmp_path, monkeypat
 
     monkeypatch.setattr(wechat4_source, "capture_account_key", lambda *_args, **_kwargs: b"k" * 32)
     monkeypatch.setattr(wechat4_source, "DecryptedDatabaseCache", _PlainDatabaseCache)
+    monkeypatch.setenv("LOCALAPPDATA", str(tmp_path / "appdata"))
 
     source = WeChat4LocalSource(account, image_key=image_key)
     try:
         conversations = source.list_conversations()
         messages = source.get_messages(peer)
-        image_bytes = Path(messages[2].content).read_bytes()
+        image_path = Path(messages[2].content)
+        image_bytes = image_path.read_bytes()
+        voice_path = messages[3].voice_path
+        assert voice_path is not None
+        voice_bytes = voice_path.read_bytes()
         result = ExportService().export(
             source,
             ExportOptions(
@@ -189,8 +195,15 @@ def test_local_source_lists_conversations_and_reads_messages(tmp_path, monkeypat
     assert image_bytes == image_head + image_tail
     assert messages[3].content == "[语音消息 · 6 秒 · 待转写]"
     assert messages[3].duration_ms == 6120
-    assert messages[3].voice_path is not None
-    assert messages[3].voice_path.read_bytes() == b"\x02#!SILK_V3\nfake"
+    assert voice_bytes == b"\x02#!SILK_V3\nfake"
+    # Decrypted images and voice clips live only in session temp directories and
+    # are gone once the source is closed; nothing is persisted in app data.
+    temp_root = Path(tempfile.gettempdir())
+    assert temp_root in voice_path.parents
+    assert temp_root in image_path.parents
+    assert not voice_path.exists()
+    assert not image_path.exists()
+    assert not (tmp_path / "appdata" / "WeChatAIMemory" / "voice-audio").exists()
     assert messages[4].content == "第二分片消息"
     assert result.message_count == 5
     assert result.image_page_count == 1

@@ -4,11 +4,18 @@ import hashlib
 import sqlite3
 from pathlib import Path
 
-from ..voice import app_data_dir
+from ..workspace import TemporaryWorkspace
 from .wechat4_crypto import DecryptedDatabaseCache
 
 
 class WeChatVoiceCache:
+    """Extract SILK voice clips into a session-only temporary directory.
+
+    The clips are private chat content, so they are never written to a
+    persistent location. ``close()`` removes them, and a stale-workspace
+    sweep on the next start covers sessions that crashed.
+    """
+
     def __init__(
         self,
         databases: DecryptedDatabaseCache,
@@ -17,7 +24,9 @@ class WeChatVoiceCache:
     ) -> None:
         self._databases = databases
         account_hash = hashlib.sha256(account_id.encode("utf-8")).hexdigest()[:16]
-        self._root = (root or app_data_dir() / "voice-audio") / account_hash
+        self._workspace = TemporaryWorkspace("wce-voice-") if root is None else None
+        base = self._workspace.path if self._workspace is not None else root
+        self._root = base / account_hash
 
     def resolve(
         self,
@@ -69,6 +78,10 @@ class WeChatVoiceCache:
             temporary.write_bytes(data)
             temporary.replace(target)
         return target
+
+    def close(self) -> None:
+        if self._workspace is not None:
+            self._workspace.cleanup()
 
 
 def _media_database_path(message_database: str) -> str | None:

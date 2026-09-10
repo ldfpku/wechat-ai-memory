@@ -10,7 +10,6 @@ import re
 import shutil
 import sqlite3
 import struct
-import tempfile
 import time
 from dataclasses import dataclass
 from pathlib import Path
@@ -18,6 +17,7 @@ from typing import Callable, Iterable
 
 from Crypto.Cipher import AES
 
+from ..workspace import TemporaryWorkspace
 from .base import SourceError
 
 
@@ -174,8 +174,8 @@ class DecryptedDatabaseCache:
         self.db_dir = db_dir
         self.raw_key = raw_key
         self.keys = keys or {}
-        self._temp = tempfile.TemporaryDirectory(prefix="wce-wechat4-")
-        self._root = Path(self._temp.name)
+        self._workspace = TemporaryWorkspace("wce-db-")
+        self._root = self._workspace.path
         self._encrypted_root = self._root / "encrypted"
         self._decrypted_root = self._root / "decrypted"
         self._cache: dict[str, tuple[tuple[int, int, int, int], Path]] = {}
@@ -224,7 +224,7 @@ class DecryptedDatabaseCache:
 
     def close(self) -> None:
         self._cache.clear()
-        self._temp.cleanup()
+        self._workspace.cleanup()
 
 
 def _database_signature(source: Path) -> tuple[int, int, int, int]:

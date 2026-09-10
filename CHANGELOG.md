@@ -1,5 +1,24 @@
 # Changelog
 
+## v0.3.8-alpha
+
+本版本是 [ldfpku/wechat-ai-memory](https://github.com/ldfpku/wechat-ai-memory) 分支的首个发布，重点加固本机隐私边界与发布流程。
+
+### Privacy
+
+- 微信语音原始音频不再持久保存到 `%LOCALAPPDATA%`，改为只存放在会话临时目录，并在数据源关闭时删除；旧版本遗留的 `voice-audio` 缓存会在启动时自动清理。
+- 程序异常退出后残留的解密数据库副本、图片、语音和渲染页临时目录，会在下次启动时自动清理。
+- 下载语音模型时默认关闭 Hugging Face Hub 遥测，并且不再隐式附带本机缓存的 Hugging Face 令牌。
+
+### Fixed
+
+- README 中的下载、克隆和状态徽章链接指向已失效的上游地址，现改为本仓库。
+
+### Changed
+
+- 说明语音模型下载可通过 `HF_ENDPOINT` 环境变量使用镜像站。
+- `.gitignore` 新增微信数据库、语音、附件与密钥文件规则，避免误提交真实数据。
+
 ## v0.3.7-alpha
 
 ### Added

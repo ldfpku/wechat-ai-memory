@@ -3,7 +3,6 @@ from __future__ import annotations
 import os
 import re
 import shutil
-import tempfile
 from dataclasses import dataclass, replace
 from datetime import datetime
 from pathlib import Path
@@ -14,6 +13,7 @@ from .pdf_exporter import PdfExporter
 from .rendering import ChatRenderer, ImagePageRenderer
 from .sources import ChatSource
 from .text_exporters import export_json, export_markdown
+from .workspace import TemporaryWorkspace
 
 ProgressCallback = Callable[[int, int, str], None]
 
@@ -71,9 +71,8 @@ class ExportService:
         self._progress(progress, 1, 5, "Rendering chat pages")
         chat_pages = self.chat_renderer.render(conversation, messages, options.start, options.end)
 
-        with tempfile.TemporaryDirectory(prefix="wce-") as temp_name:
-            temp_dir = Path(temp_name)
-            render_dir = temp_dir
+        with TemporaryWorkspace("wce-render-") as workspace:
+            render_dir = workspace.path
             message_by_id = {message.id: message for message in messages}
             image_messages = [message for message in messages if message.image_path is not None]
             image_position = {message.id: index + 1 for index, message in enumerate(image_messages)}

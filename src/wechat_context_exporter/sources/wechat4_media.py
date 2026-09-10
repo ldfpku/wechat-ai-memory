@@ -5,11 +5,11 @@ import os
 import shutil
 import struct
 import subprocess
-import tempfile
 from pathlib import Path
 
 from Crypto.Cipher import AES
 
+from ..workspace import TemporaryWorkspace
 from .base import SourceError
 
 
@@ -175,8 +175,8 @@ class DecryptedImageCache:
         self.attachment_dir = attachment_dir
         self.aes_key = aes_key
         self.xor_key = derive_image_xor_key(attachment_dir)
-        self._temp = tempfile.TemporaryDirectory(prefix="wce-images-")
-        self._root = Path(self._temp.name)
+        self._workspace = TemporaryWorkspace("wce-image-")
+        self._root = self._workspace.path
         self._index: dict[str, list[Path]] | None = None
         self._cache: dict[Path, Path] = {}
 
@@ -196,7 +196,7 @@ class DecryptedImageCache:
     def close(self) -> None:
         self._cache.clear()
         self._index = None
-        self._temp.cleanup()
+        self._workspace.cleanup()
 
     def _build_index(self) -> dict[str, list[Path]]:
         index: dict[str, list[Path]] = {}
