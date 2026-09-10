@@ -126,3 +126,16 @@ def test_process_identity_is_checked_against_real_processes() -> None:
     assert not workspace._process_alive(2**40)
     assert workspace._process_start_time(2**40) is None
     assert not workspace._process_alive(0)
+
+
+@pytest.mark.skipif(os.name != "nt", reason="Win32 last-error handling")
+def test_stale_win32_error_does_not_resurrect_out_of_range_pids() -> None:
+    import ctypes
+
+    error_access_denied = 5
+    ctypes.set_last_error(error_access_denied)
+    assert not workspace._process_alive(2**40)
+    ctypes.set_last_error(error_access_denied)
+    assert not workspace._process_alive(4_000_000_000)
+    ctypes.set_last_error(error_access_denied)
+    assert workspace._is_stale_marker(2**40, None)
