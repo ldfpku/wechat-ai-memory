@@ -7,6 +7,7 @@ from pathlib import Path
 
 from .service import ExportOptions, ExportService
 from .sources import JsonChatSource, SourceError
+from .workspace import remove_stale_workspaces
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -29,6 +30,10 @@ def build_parser() -> argparse.ArgumentParser:
 
 def main(argv: list[str] | None = None) -> int:
     args = build_parser().parse_args(argv)
+    try:
+        remove_stale_workspaces()
+    except Exception:  # Cleanup of old leftovers must never block an export.
+        pass
     try:
         source = JsonChatSource(args.source)
     except SourceError as exc:

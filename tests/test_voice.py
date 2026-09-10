@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import io
+import os
 import wave
 from datetime import datetime
 
@@ -12,6 +13,7 @@ from wechat_context_exporter.voice import (
     VoiceTranscriptCache,
     VoiceTranscriber,
     decode_silk_to_wav,
+    remove_legacy_audio_cache,
     voice_placeholder,
 )
 
@@ -38,6 +40,26 @@ def test_voice_transcript_cache_updates_messages_without_loading_model(tmp_path)
     assert result[0].transcript == "这是缓存的语音文字"
     payload = json.loads(next((tmp_path / "transcripts").glob("*.json")).read_text(encoding="utf-8"))
     assert payload["model"] == "small"
+
+
+def test_legacy_voice_audio_cache_is_removed_but_transcripts_are_kept(tmp_path, monkeypatch) -> None:
+    monkeypatch.setenv("LOCALAPPDATA", str(tmp_path))
+    legacy = tmp_path / "WeChatAIMemory" / "voice-audio" / "0123456789abcdef"
+    legacy.mkdir(parents=True)
+    (legacy / "clip.silk").write_bytes(b"\x02#!SILK_V3\nvoice")
+    transcripts = tmp_path / "WeChatAIMemory" / "voice-transcripts"
+    transcripts.mkdir()
+
+    assert remove_legacy_audio_cache()
+
+    assert not (tmp_path / "WeChatAIMemory" / "voice-audio").exists()
+    assert transcripts.is_dir()
+    assert not remove_legacy_audio_cache()
+
+
+def test_model_download_never_reports_telemetry_or_sends_cached_tokens() -> None:
+    assert os.environ.get("HF_HUB_DISABLE_TELEMETRY") == "1"
+    assert os.environ.get("HF_HUB_DISABLE_IMPLICIT_TOKEN") == "1"
 
 
 def test_voice_placeholder_describes_duration_and_availability() -> None:

@@ -124,6 +124,7 @@ class WeChat4LocalSource:
 
     def close(self) -> None:
         self._images.close()
+        self._voices.close()
         self._databases.close()
 
     def set_image_key(self, image_key: bytes) -> None:

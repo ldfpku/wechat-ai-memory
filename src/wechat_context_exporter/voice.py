@@ -3,6 +3,7 @@ from __future__ import annotations
 import hashlib
 import json
 import os
+import shutil
 import tempfile
 import wave
 from dataclasses import replace
@@ -10,7 +11,15 @@ from pathlib import Path
 from typing import Callable, Iterable
 
 from .models import Message, MessageType
+from .workspace import TemporaryWorkspace
 
+# The Whisper model is fetched from the Hugging Face Hub once. Never report
+# usage back to the Hub, and never attach a Hub token cached on this machine to
+# that download: with HF_ENDPOINT pointing at a mirror it would be sent there.
+os.environ.setdefault("HF_HUB_DISABLE_TELEMETRY", "1")
+os.environ.setdefault("HF_HUB_DISABLE_IMPLICIT_TOKEN", "1")
+
+LEGACY_AUDIO_CACHE = "voice-audio"
 
 ProgressCallback = Callable[[int, int, str], None]
 
@@ -22,6 +31,15 @@ def default_voice_model() -> str:
 def app_data_dir() -> Path:
     base = Path(os.environ.get("LOCALAPPDATA", Path.home() / ".local" / "share"))
     return base / "WeChatAIMemory"
+
+
+def remove_legacy_audio_cache() -> bool:
+    """Delete raw voice clips that releases before 0.3.8 kept in the app data directory."""
+    legacy = app_data_dir() / LEGACY_AUDIO_CACHE
+    if not legacy.is_dir():
+        return False
+    shutil.rmtree(legacy, ignore_errors=True)
+    return not legacy.exists()
 
 
 def voice_placeholder(duration_ms: int | None, available: bool = True) -> str:
@@ -134,13 +152,13 @@ class VoiceTranscriber:
             compute_type="int8",
             download_root=str(self.model_root),
         )
-        with tempfile.TemporaryDirectory(prefix="wechat-memory-voice-") as temp_name:
+        with TemporaryWorkspace("wce-wav-") as workspace:
             for current, (index, message) in enumerate(pending, start=1):
                 if cancelled and cancelled():
                     break
                 if progress:
                     progress(current - 1, len(pending), f"正在转写语音 {current}/{len(pending)}")
-                wav_path = Path(temp_name) / f"{current:05d}.wav"
+                wav_path = workspace.path / f"{current:05d}.wav"
                 decode_silk_to_wav(message.voice_path, wav_path)
                 segments, _info = model.transcribe(
                     str(wav_path),

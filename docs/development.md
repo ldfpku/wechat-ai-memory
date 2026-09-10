@@ -53,6 +53,17 @@ python scripts\generate_readme_tutorial.py
 
 脚本会生成 README 内联使用的 GIF，以及点击动画后打开的高清 MP4。
 
+## Fork 与上游同步
+
+本仓库 fork 自 `ikevss/wechat-ai-memory`。本地克隆中 `upstream` 远程仅用于拉取，推送地址已设为 `no_push`，`gh` 的默认仓库也指向本仓库，避免把提交、PR 或 Release 误发到上游：
+
+```powershell
+git remote set-url --push upstream no_push
+gh repo set-default ldfpku/wechat-ai-memory
+```
+
+同步上游改动时使用 `git fetch upstream` 后再合并或变基，然后只推送到 `origin`。
+
 ## 代码结构
 
 ```text
@@ -77,4 +88,9 @@ src/wechat_context_exporter/
 5. 在干净的 Windows 用户环境中重复启动和导出测试。
 6. 确认提交中不含 `outputs/`、`work/`、微信数据库、密钥或真实聊天截图。
 
-`.github/workflows/release.yml` 会在手动触发或推送 `v*` 标签时重新执行上述构建与验收。只有通过全部检查的标签构建才会创建 GitHub Release。
+`.github/workflows/release.yml` 会在手动触发或推送 `v*` 标签时重新执行上述构建与验收。只有通过全部检查的标签构建才会创建 GitHub Release。标签必须与包版本一致并推送到 `origin`，例如：
+
+```powershell
+git tag v0.3.8-alpha
+git push origin v0.3.8-alpha
+```

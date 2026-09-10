@@ -15,3 +15,14 @@ build/
 Thumbs.db
 outputs/*
 !outputs/.gitkeep
+
+# Never commit WeChat data, keys, or exported archives.
+*.db
+*.db-wal
+*.db-shm
+*.silk
+*.dat
+*.key
+.env
+xwechat_files/
+db_storage/
