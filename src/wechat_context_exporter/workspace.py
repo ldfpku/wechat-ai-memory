@@ -160,9 +160,12 @@ def _windows_kernel32():
 
 
 def _windows_open_process(kernel32, pid: int):
+    import ctypes
+
     process_query_limited_information = 0x1000
-    if pid > 0xFFFFFFFF:
+    if not 0 < pid <= 0xFFFFFFFF:
         return None
+    ctypes.set_last_error(0)
     return kernel32.OpenProcess(process_query_limited_information, False, pid) or None
 
 
@@ -172,6 +175,8 @@ def _windows_process_alive(pid: int) -> bool:
 
     error_access_denied = 5
     still_active = 259
+    if not 0 < pid <= 0xFFFFFFFF:
+        return False
     kernel32 = _windows_kernel32()
     handle = _windows_open_process(kernel32, pid)
     if handle is None:
