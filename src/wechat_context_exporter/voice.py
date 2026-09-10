@@ -13,11 +13,12 @@ from typing import Callable, Iterable
 from .models import Message, MessageType
 from .workspace import TemporaryWorkspace
 
-# The Whisper model is fetched from the Hugging Face Hub once. Never report
-# usage back to the Hub, and never attach a Hub token cached on this machine to
-# that download: with HF_ENDPOINT pointing at a mirror it would be sent there.
-os.environ.setdefault("HF_HUB_DISABLE_TELEMETRY", "1")
-os.environ.setdefault("HF_HUB_DISABLE_IMPLICIT_TOKEN", "1")
+# The Whisper model is fetched from the Hugging Face Hub once. This process never
+# reports usage back to the Hub and never attaches a Hub token cached on this
+# machine to that download (with HF_ENDPOINT pointing at a mirror the token would
+# be sent there). Both are enforced regardless of inherited environment values.
+os.environ["HF_HUB_DISABLE_TELEMETRY"] = "1"
+os.environ["HF_HUB_DISABLE_IMPLICIT_TOKEN"] = "1"
 
 LEGACY_AUDIO_CACHE = "voice-audio"
 

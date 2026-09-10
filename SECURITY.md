@@ -21,9 +21,13 @@ keys remain in process memory and are never written to disk.
 Decrypted database copies, recovered images, extracted voice clips, and
 rendered pages live only in per-session directories under the system temp
 folder. They are deleted when the data source is closed, and directories left
-behind by a crash are removed on the next start. The only persistent cache is
-the text of voice transcripts under `%LOCALAPPDATA%\WeChatAIMemory`.
+behind by a crash are removed on the next start. The only chat-derived data
+cached automatically is the text of voice transcripts, stored under
+`%LOCALAPPDATA%\WeChatAIMemory` next to the downloaded speech model. Everything
+else written to disk (PDF, Markdown, JSON, copied attachments, optional page
+images) goes only to the locations the user selects for an export.
 
 No telemetry or remote AI API is used. The only network access is the one-time
-download of the local speech model, which carries no chat data, no usage
-report, and no locally cached Hugging Face token.
+download of the local speech model; that request carries no chat data, Hub
+usage reporting is disabled, and no locally cached Hugging Face token is
+attached.
