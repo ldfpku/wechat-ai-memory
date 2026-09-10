@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import importlib
 import json
 import io
 import os
@@ -9,6 +10,7 @@ from datetime import datetime
 from wechat_context_exporter.models import Message, MessageType
 import pysilk
 
+from wechat_context_exporter import voice as voice_module
 from wechat_context_exporter.voice import (
     VoiceTranscriptCache,
     VoiceTranscriber,
@@ -60,6 +62,16 @@ def test_legacy_voice_audio_cache_is_removed_but_transcripts_are_kept(tmp_path, 
 def test_model_download_never_reports_telemetry_or_sends_cached_tokens() -> None:
     assert os.environ.get("HF_HUB_DISABLE_TELEMETRY") == "1"
     assert os.environ.get("HF_HUB_DISABLE_IMPLICIT_TOKEN") == "1"
+
+
+def test_privacy_switches_override_inherited_environment(monkeypatch) -> None:
+    monkeypatch.setenv("HF_HUB_DISABLE_TELEMETRY", "0")
+    monkeypatch.setenv("HF_HUB_DISABLE_IMPLICIT_TOKEN", "0")
+
+    importlib.reload(voice_module)
+
+    assert os.environ["HF_HUB_DISABLE_TELEMETRY"] == "1"
+    assert os.environ["HF_HUB_DISABLE_IMPLICIT_TOKEN"] == "1"
 
 
 def test_voice_placeholder_describes_duration_and_availability() -> None:

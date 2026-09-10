@@ -123,4 +123,6 @@ def test_process_identity_is_checked_against_real_processes() -> None:
     assert not workspace._process_alive(child.pid)
     assert workspace._is_stale_marker(child.pid, start)
     assert not workspace._process_alive(4_000_000_000)
+    assert not workspace._process_alive(2**40)
+    assert workspace._process_start_time(2**40) is None
     assert not workspace._process_alive(0)
