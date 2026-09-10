@@ -47,10 +47,11 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
+from ..cleanup import remove_private_leftovers
 from ..models import Message, MessageType
 from ..rendering.fonts import FontBook
 from ..service import ExportOptions, ExportResult, ExportService
-from ..voice import VoiceTranscriber, remove_legacy_audio_cache
+from ..voice import VoiceTranscriber
 from ..sources import (
     ChatSource,
     JsonChatSource,
@@ -58,7 +59,6 @@ from ..sources import (
     discover_wechat4_accounts,
 )
 from ..sources.wechat4_crypto import extract_image_key
-from ..workspace import remove_stale_workspaces
 
 APP_NAME = "微信 AI 记忆库"
 APP_ID = "LocalTools.WeChatAIMemory"
@@ -1634,15 +1634,6 @@ QToolTip {
     padding: 6px;
 }
 """
-
-
-def remove_private_leftovers() -> None:
-    """Remove decrypted data that a crashed session or an older release left on disk."""
-    try:
-        remove_stale_workspaces()
-        remove_legacy_audio_cache()
-    except Exception:  # Cleanup must never prevent the application from starting.
-        pass
 
 
 def main() -> int:
